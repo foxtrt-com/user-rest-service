@@ -11,5 +11,6 @@ public class UsersProfile : Profile
         // Source to Target
         CreateMap<User, UserReadDto>();
         CreateMap<UserCreateDto, User>();
+        CreateMap<UserReadDto, UserPublishedDto>();
     }
 }

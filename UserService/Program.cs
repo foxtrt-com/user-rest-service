@@ -1,5 +1,6 @@
 using UserService.Data;
 using Microsoft.EntityFrameworkCore;
+using UserService.AsyncDataServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,8 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseInMemoryDatabase("DevelopmentDb"));
 
 builder.Services.AddScoped<IUserRepo, UserRepo>();
+
+builder.Services.AddSingleton<IMessageBusClient, MessageBusClient>();
 
 builder.Services.AddControllers();
 
