@@ -16,8 +16,19 @@ public class MessageBusClient : IMessageBusClient
     public MessageBusClient(IConfiguration configuration)
     {
         _configuration = configuration;
-        var factory = new ConnectionFactory() { HostName = _configuration["RabbitMQHost"],
-            Port = int.Parse(_configuration["RabbitMQPort"]) };
+
+        if(string.IsNullOrEmpty(_configuration["RabbitMQ:Host"])
+            || string.IsNullOrEmpty(_configuration["RabbitMQ:Port"])
+        )
+        {
+            Console.WriteLine("RabbitMQ configuration is missing. Message Bus cannot be initialized.");
+            return;
+        }
+
+        var factory = new ConnectionFactory() {
+                HostName = _configuration["RabbitMQ:Host"]!,
+                Port = int.Parse(_configuration["RabbitMQ:Port"]!)
+            };
 
         try
         {
