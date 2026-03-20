@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
@@ -17,7 +16,7 @@ public class MessageBusClient : IMessageBusClient
     {
         _configuration = configuration;
 
-        if(string.IsNullOrEmpty(_configuration["RabbitMQ:Host"])
+        if (string.IsNullOrEmpty(_configuration["RabbitMQ:Host"])
             || string.IsNullOrEmpty(_configuration["RabbitMQ:Port"])
         )
         {
@@ -25,10 +24,11 @@ public class MessageBusClient : IMessageBusClient
             return;
         }
 
-        var factory = new ConnectionFactory() {
-                HostName = _configuration["RabbitMQ:Host"]!,
-                Port = int.Parse(_configuration["RabbitMQ:Port"]!)
-            };
+        var factory = new ConnectionFactory()
+        {
+            HostName = _configuration["RabbitMQ:Host"]!,
+            Port = int.Parse(_configuration["RabbitMQ:Port"]!)
+        };
 
         try
         {
@@ -67,7 +67,7 @@ public class MessageBusClient : IMessageBusClient
         var body = Encoding.UTF8.GetBytes(message);
 
         var props = new BasicProperties();
-        
+
         await _channel.BasicPublishAsync(exchange: "trigger",
                                     routingKey: "",
                                     mandatory: true,

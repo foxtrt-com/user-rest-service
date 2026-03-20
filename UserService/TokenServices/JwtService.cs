@@ -1,11 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using UserService.Models;
 
-namespace UserService.JwtService;
+namespace UserService.TokenServices;
 
 public class JwtService : IJwtService
 {
@@ -69,15 +68,6 @@ public class JwtService : IJwtService
         Console.WriteLine($"Access token generated for user {user.Id}");
 
         return tokenString;
-    }
-
-    public string GenerateRefreshToken()
-    {
-        //Generate random 64 byte refresh token converted to base64
-        var randomNumber = new byte[64];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        return Convert.ToBase64String(randomNumber);
     }
 
     public ClaimsPrincipal? ValidateToken(string token, bool validateLifetime = true)

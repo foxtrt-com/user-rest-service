@@ -9,7 +9,7 @@ namespace UserService.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UsersController: ControllerBase
+public class UsersController : ControllerBase
 {
     private readonly IUserRepo _repo;
     private readonly IMapper _mapper;
@@ -72,5 +72,5 @@ public class UsersController: ControllerBase
         }
 
         return CreatedAtRoute(nameof(GetUserById), new { Id = userReadDto.Id }, userReadDto);
-    } 
+    }
 }
