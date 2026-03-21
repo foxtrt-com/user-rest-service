@@ -1,3 +1,4 @@
+using BC = BCrypt.Net.BCrypt;
 using UserService.Dtos;
 using UserService.TokenServices;
 using UserService.Models;
@@ -29,9 +30,11 @@ public class AuthService : IAuthService
     {
         var user = _userRepo.GetUserByUsername(request.Username);
 
-        //TODO: Validate password using hashing and salting
+        // Validate password using hashing and salting
+        var passwordVerified = BC.Verify(request.Password, user.Password);
 
-        if (user == null)
+        // If user doesnt exist or password not verified, return null
+        if (user == null || !passwordVerified)
         {
             Console.WriteLine($"Authentication failed for user: {request.Username}");
             return null;

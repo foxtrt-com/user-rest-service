@@ -20,9 +20,10 @@ public static class PrepDb
         {
             Console.WriteLine("Seeding data...");
 
+            // Create users with identical test passwords: Password123!
             context.Users.AddRange(
-                new User { Username = "Admin", Email = "admin@example.com" },
-                new User { Username = "User", Email = "user@example.com" }
+                new User { Username = "Admin", Email = "admin@example.com", Password = "$2a$11$YUvVQGsxxr66axP04pzVOu6L4EvtR8M1dUdEiUosZeNMzV2axlcIa", Roles = ["Admin"] },
+                new User { Username = "User", Email = "user@example.com", Password = "$2a$11$YUvVQGsxxr66axP04pzVOu6L4EvtR8M1dUdEiUosZeNMzV2axlcIa" }
             );
             context.SaveChanges();
         }

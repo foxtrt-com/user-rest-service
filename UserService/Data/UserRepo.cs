@@ -1,3 +1,4 @@
+using BC = BCrypt.Net.BCrypt;
 using UserService.Models;
 
 namespace UserService.Data;
@@ -43,8 +44,9 @@ public class UserRepo : IUserRepo
             throw new ArgumentNullException(nameof(user));
         }
 
-        //TODO: Salt and hash password before saving to Db, Use Bcrypt for this
-        user.Password = "hashed_password"; // Placeholder, replace with actual hashed password
+        // Salt and hash password before saving to Db
+        var hashedPassword = BC.HashPassword(user.Password);
+        user.Password = hashedPassword;
 
         // Add user to Db
         _context.Users.Add(user);
