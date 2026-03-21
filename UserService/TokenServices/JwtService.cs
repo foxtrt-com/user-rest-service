@@ -18,7 +18,7 @@ public class JwtService : IJwtService
         if (string.IsNullOrEmpty(_configuration["Jwt:SecretKey"])
             || string.IsNullOrEmpty(_configuration["Jwt:Issuer"])
             || string.IsNullOrEmpty(_configuration["Jwt:Audience"])
-            || string.IsNullOrEmpty(_configuration["Jwt:AccessTokenExpirationMinutes"])
+            || string.IsNullOrEmpty(_configuration["Jwt:ExpirationMinutes"])
             || string.IsNullOrEmpty(_configuration["Jwt:RefreshTokenExpirationDays"])
         )
         {
