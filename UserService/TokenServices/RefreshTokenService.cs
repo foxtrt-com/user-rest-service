@@ -25,12 +25,43 @@ public class RefreshTokenService : IRefreshTokenService
         return Convert.ToBase64String(randomNumber);
     }
 
-    public async Task<string> RotateRefreshTokenAsync(string oldToken, int userId)
+    public async Task<int> GetUserIdFromToken(string token)
+    {
+        var refreshToken = await _repo.GetTokenAsync(token);
+
+        if (refreshToken == null)
+        {
+            throw new SecurityTokenException("Invalid refresh token");
+        }
+
+        return refreshToken.UserId;
+    }
+
+    public async Task RevokeRefreshTokenAsync(string token)
+    {
+        var refreshToken = await _repo.GetTokenAsync(token);
+
+        // If token is non existent, already revoked or already used, do nothing; it doesnt work anyways
+        if (refreshToken == null || refreshToken.IsRevoked || refreshToken.IsUsed)
+        {
+            return;
+        }
+
+        // Set token to revoked
+        refreshToken.IsRevoked = true;
+        refreshToken.RevokedAt = DateTime.UtcNow;
+
+        // Update and save to database
+        _repo.Update(refreshToken);
+        await _repo.SaveChangesAsync();
+    }
+
+    public async Task<RefreshToken> RotateRefreshTokenAsync(string oldToken)
     {
         // Validate the old token exists and belongs to the user
         var existingToken = await _repo.GetTokenAsync(oldToken);
 
-        if (existingToken == null || existingToken.UserId != userId)
+        if (existingToken == null)
         {
             throw new SecurityTokenException("Invalid refresh token");
         }
@@ -38,8 +69,8 @@ public class RefreshTokenService : IRefreshTokenService
         // Check if token has already been used (potential attack)
         if (existingToken.IsUsed)
         {
-            Console.WriteLine($"Refresh token reuse detected for user {userId}. Revoking all tokens");
-            await _repo.RevokeAllUserTokensAsync(userId);
+            Console.WriteLine($"Refresh token reuse detected for user {existingToken.UserId}. Revoking all tokens");
+            await _repo.RevokeAllUserTokensAsync(existingToken.UserId);
             await _repo.SaveChangesAsync();
             throw new SecurityTokenException("Token reuse detected. Please log in again.");
         }
@@ -52,9 +83,11 @@ public class RefreshTokenService : IRefreshTokenService
 
         // Generate and save refresh token
         var newToken = GenerateRefreshToken();
-        await SaveRefreshTokenAsync(userId, newToken);
+        await SaveRefreshTokenAsync(existingToken.UserId, newToken);
 
-        return newToken;
+        var savedToken = await _repo.GetTokenAsync(newToken);
+
+        return savedToken;
     }
 
     public async Task SaveRefreshTokenAsync(int userId, string refreshToken)

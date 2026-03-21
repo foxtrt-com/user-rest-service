@@ -21,8 +21,8 @@ public static class PrepDb
             Console.WriteLine("Seeding data...");
 
             context.Users.AddRange(
-                new User { Name = "Admin", Email = "admin@example.com" },
-                new User { Name = "User", Email = "user@example.com" }
+                new User { Username = "Admin", Email = "admin@example.com" },
+                new User { Username = "User", Email = "user@example.com" }
             );
             context.SaveChanges();
         }

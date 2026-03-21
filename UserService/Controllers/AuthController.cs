@@ -22,7 +22,7 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
-    [HttpPost(Name = "Login")]
+    [HttpPost("Login")]
     public async Task<ActionResult> Login(LoginRequest loginRequest)
     {
         // Authenticate user and generate tokens
@@ -54,7 +54,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    [HttpPost(Name = "Refresh")]
+    [HttpPost("Refresh")]
     public async Task<ActionResult> RefreshToken()
     {
         var refreshToken = Request.Cookies["refreshToken"];
@@ -93,7 +93,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    [HttpPost(Name = "Logout")]
+    [HttpPost("Logout")]
     public async Task<ActionResult> Logout()
     {
         var refreshToken = Request.Cookies["refreshToken"];

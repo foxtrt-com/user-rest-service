@@ -11,21 +11,18 @@ public class AuthService : IAuthService
     private readonly IJwtService _jwtService;
     private readonly IUserRepo _userRepo;
     private readonly IRefreshTokenService _refreshTokenService;
-    private readonly IRefreshTokenRepo _refreshTokenRepo;
 
     public AuthService(
         IConfiguration configuration,
         IJwtService jwtService,
         IUserRepo userRepo,
-        IRefreshTokenService refreshTokenService,
-        IRefreshTokenRepo refreshTokenRepo
+        IRefreshTokenService refreshTokenService
     )
     {
         _configuration = configuration;
         _jwtService = jwtService;
         _userRepo = userRepo;
         _refreshTokenService = refreshTokenService;
-        _refreshTokenRepo = refreshTokenRepo;
     }
 
     public async Task<AuthResponse?> AuthenticateAsync(LoginRequest request)
@@ -51,7 +48,7 @@ public class AuthService : IAuthService
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:Duration"]!)),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpirationMinutes"]!)),
             User = new UserReadDto
             {
                 Id = user.Id,
@@ -65,17 +62,16 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse?> RefreshTokenAsync(string refreshToken)
     {
-        var token = await _refreshTokenRepo.GetTokenAsync(refreshToken);
-        var newRefreshToken = await _refreshTokenService.RotateRefreshTokenAsync(refreshToken, token.UserId);
+        var newRefreshToken = await _refreshTokenService.RotateRefreshTokenAsync(refreshToken);
 
-        var user = _userRepo.GetUserById(token.UserId);
+        var user = _userRepo.GetUserById(newRefreshToken.UserId);
         var accessToken = _jwtService.GenerateAccessToken(user);
 
         return new AuthResponse
         {
             AccessToken = accessToken,
-            RefreshToken = newRefreshToken,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:Duration"]!)),
+            RefreshToken = newRefreshToken.Token,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpirationMinutes"]!)),
             User = new UserReadDto
             {
                 Id = user.Id,
@@ -87,8 +83,8 @@ public class AuthService : IAuthService
         };
     }
 
-    public Task<bool> RevokeTokenAsync(string refreshToken)
+    public async Task RevokeTokenAsync(string refreshToken)
     {
-        throw new NotImplementedException();
+        await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
     }
 }
