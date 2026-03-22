@@ -1,6 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using UserService.Models;
 
@@ -9,13 +9,14 @@ namespace UserService.TokenServices;
 public class JwtService : IJwtService
 {
     private readonly IConfiguration _configuration;
+    private readonly RSA _rsa;
 
     public JwtService(IConfiguration configuration)
     {
         _configuration = configuration;
 
         // Jwt config validation
-        if (string.IsNullOrEmpty(_configuration["Jwt:SecretKey"])
+        if (string.IsNullOrEmpty(_configuration["Jwt:PrivateKey"])
             || string.IsNullOrEmpty(_configuration["Jwt:Issuer"])
             || string.IsNullOrEmpty(_configuration["Jwt:Audience"])
             || string.IsNullOrEmpty(_configuration["Jwt:ExpirationMinutes"])
@@ -25,12 +26,15 @@ public class JwtService : IJwtService
             Console.WriteLine("JWT configuration is missing or incomplete. JWT Service cannot be used.");
             return;
         }
+
+        // Setup RSA for asymetric token encryption
+        _rsa = RSA.Create();
+        _rsa.ImportFromPem(_configuration["Jwt:PrivateKey"]!);
     }
 
     public string GenerateAccessToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"]!);
 
         // Setup claims for the token
         var claims = new List<Claim>
@@ -58,8 +62,8 @@ public class JwtService : IJwtService
             Issuer = _configuration["Jwt:Issuer"],
             Audience = _configuration["Jwt:Audience"],
             SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature)
+                new RsaSecurityKey(_rsa),
+                SecurityAlgorithms.RsaSha256)
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -73,7 +77,6 @@ public class JwtService : IJwtService
     public ClaimsPrincipal? ValidateToken(string token, bool validateLifetime = true)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"]!);
 
         try
         {
@@ -81,7 +84,7 @@ public class JwtService : IJwtService
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
+                IssuerSigningKey = new RsaSecurityKey(_rsa),
                 ValidateIssuer = true,
                 ValidIssuer = _configuration["Jwt:Issuer"],
                 ValidateAudience = true,
@@ -95,7 +98,7 @@ public class JwtService : IJwtService
 
             // Ensure the token uses expected encryption algorithm
             if (validatedToken is JwtSecurityToken jwtToken &&
-                !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                !jwtToken.Header.Alg.Equals(SecurityAlgorithms.RsaSha256, StringComparison.InvariantCultureIgnoreCase))
             {
                 Console.WriteLine($"Token validation failed: invalid algorithm {jwtToken.Header.Alg}");
                 return null;
